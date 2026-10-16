@@ -2,7 +2,7 @@
  * @Author: hax 3152409286@qq.com
  * @Date: 2025-04-27 13:34:19
  * @LastEditors: hax 3152409286@qq.com
- * @LastEditTime: 2025-05-13 09:54:08
+ * @LastEditTime: 2026-09-08 10:45:14
  * @FilePath: \haxoj-frontend\src\main.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -16,8 +16,9 @@ import '@arco-design/web-vue/dist/arco.css'
 
 import App from './App.vue'
 import router from './router'
+import '@/plugins/axios'
 
-import './api/core/axiosInterceptors'
+import 'bytemd/dist/index.css'
 
 // 创建pinia实例并使用持久化插件
 const pinia = createPinia()

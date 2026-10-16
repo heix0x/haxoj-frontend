@@ -2,7 +2,7 @@
  * @Author: hax 3152409286@qq.com
  * @Date: 2025-04-28 11:00:00
  * @LastEditors: hax 3152409286@qq.com
- * @LastEditTime: 2026-05-22 18:49:20
+ * @LastEditTime: 2026-09-04 17:19:05
  * @FilePath: \haxoj-frontend\src\stores\user.js
  * @Description: 用户状态管理
  */
@@ -12,23 +12,25 @@ import { ref } from 'vue'
 import { UserControllerService } from '@/api'
 import ACCESS_ENUM from '@/access/accessEnum'
 
-// 初始用户信息
-const defaultUserInfo = {
+// 初始用户信息（工厂函数：每次返回全新对象）
+// 注意：不能用共享的常量对象！ref() 不会拷贝对象，且持久化恢复($patch)是深合并，
+// 二者都会就地把旧数据(如残留的 admin)写进默认值对象，导致"重置为默认值"失效
+const createDefaultUserInfo = () => ({
   isLogin: false,
   username: '',
-  userRole: ACCESS_ENUM.NOT_LOGIN, // guest, user, admin
+  userRole: '', // guest, user, admin
   avatar: '',
-}
+})
 
 // 定义用户状态管理
 export const useUserStore = defineStore(
   'user',
   () => {
     // 用户信息
-    const userInfo = ref(defaultUserInfo)
+    const userInfo = ref(createDefaultUserInfo())
 
     // 登录方法
-    function login(username: string, userRole = 'admin') {
+    function login(username: string, userRole = ACCESS_ENUM.USER) {
       userInfo.value = {
         isLogin: true,
         username,
@@ -39,12 +41,7 @@ export const useUserStore = defineStore(
 
     // 退出登录
     function logout() {
-      userInfo.value = {
-        isLogin: false,
-        username: '',
-        userRole: ACCESS_ENUM.NOT_LOGIN,
-        avatar: '',
-      }
+      userInfo.value = createDefaultUserInfo()
     }
 
     // 更新用户信息
@@ -73,20 +70,14 @@ export const useUserStore = defineStore(
           }
           console.log('用户信息已更新:', userInfo.value)
         } else {
-          // 失败：将用户角色设为"未登录"
-          userInfo.value = {
-            ...userInfo.value,
-            userRole: ACCESS_ENUM.NOT_LOGIN,
-          }
-          console.log('获取用户信息失败，设置未登录状态')
+          // 失败：完整重置为未登录状态，避免残留的本地缓存（如 admin 角色）继续生效
+          userInfo.value = createDefaultUserInfo()
+          console.log('获取用户信息失败，已重置为未登录状态')
         }
       } catch (error) {
-        // 请求出错，也设为未登录状态
+        // 请求出错，也完整重置为未登录状态
         console.error('获取登录用户信息失败', error)
-        userInfo.value = {
-          ...userInfo.value,
-          userRole: ACCESS_ENUM.NOT_LOGIN,
-        }
+        userInfo.value = createDefaultUserInfo()
       }
     }
 
