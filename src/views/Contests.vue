@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // 比赛组件逻辑
 defineOptions({
   name: 'ContestsPage',

@@ -12,12 +12,12 @@
     -->
     <a-menu mode="horizontal" :selected-keys="selectedKeys" @menu-item-click="handleMenuClick">
       <a-menu-item v-for="item in normalMenuItems" :key="getMenuKey(item)">
-        {{ item.meta.title }}
+        {{ item.meta?.title }}
       </a-menu-item>
       <a-sub-menu v-for="item in subMenuItems" :key="getMenuKey(item)">
-        <template #title>{{ item.meta.title }}</template>
+        <template #title>{{ item.meta?.title }}</template>
         <a-menu-item v-for="child in getVisibleChildren(item)" :key="getChildKey(item, child)">
-          {{ child.meta.title }}
+          {{ child.meta?.title }}
         </a-menu-item>
       </a-sub-menu>
     </a-menu>
@@ -169,7 +169,7 @@ const activeKey = computed(() => {
 const selectedKeys = computed(() => [activeKey.value])
 
 // 菜单项点击处理
-const handleMenuClick = (key) => {
+const handleMenuClick = (key: string) => {
   if (key === 'home') {
     router.push('/')
   } else {

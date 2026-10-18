@@ -18,7 +18,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // 关于页面组件逻辑
 defineOptions({
   name: 'AboutPage',

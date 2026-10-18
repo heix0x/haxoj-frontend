@@ -34,7 +34,7 @@ router.beforeEach(async (to) => {
   document.title = to.meta?.title ? `${to.meta.title} - HaxOJ系统` : 'HaxOJ系统'
 
   // meta.access 缺省视为 NOT_LOGIN（公共页面），直接放行
-  const needAccess = to.meta?.access ?? ACCESS_ENUM.NOT_LOGIN
+  const needAccess = (to.meta?.access as string | undefined) ?? ACCESS_ENUM.NOT_LOGIN
 
   const userStore = useUserStore()
 

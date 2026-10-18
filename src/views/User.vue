@@ -24,7 +24,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { IconUser, IconCode } from '@arco-design/web-vue/es/icon'
 

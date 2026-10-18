@@ -64,7 +64,7 @@ export const useUserStore = defineStore(
           // 成功：更新用户信息为后端返回的数据
           userInfo.value = {
             isLogin: true,
-            username: res.data.userName || res.data.userAccount || '',
+            username: res.data.userName || '',
             userRole: res.data.userRole || ACCESS_ENUM.USER,
             avatar: res.data.userAvatar || '',
           }
@@ -94,7 +94,7 @@ export const useUserStore = defineStore(
     persist: {
       key: 'haxoj-user',
       storage: localStorage,
-      paths: ['userInfo'], // 仅持久化userInfo
+      pick: ['userInfo'], // 仅持久化userInfo
     },
   },
 )
