@@ -56,7 +56,7 @@
 npm install
 
 # 2. 配置后端地址：编辑根目录 .env
-#    VITE_API_BASE_URL=http://localhost:8101
+#    VITE_API_BASE_URL=http://localhost:8001
 
 # 3. 启动开发服务器（Vite 默认 5173 端口）
 npm run dev
@@ -85,7 +85,7 @@ npm run preview
 
 ```
 haxoj-frontend/
-├── .env                       # VITE_API_BASE_URL（当前指向 http://localhost:8101）
+├── .env                       # VITE_API_BASE_URL（当前指向网关 http://localhost:8001）
 ├── vite.config.ts             # 插件 [vue(), vueDevTools()]，别名 @ → ./src
 ├── scripts/postprocess-api.cjs# api:generate 后置修补（BASE 读 env、WITH_CREDENTIALS 改 true）
 ├── src/
@@ -123,25 +123,26 @@ haxoj-frontend/
 **接口来源**：后端 Knife4j 暴露 OpenAPI 文档，前端用 `openapi-typescript-codegen` 生成 TypeScript 客户端。
 
 ```bash
-npm run api:download   # curl http://localhost:8101/api/v2/api-docs?group=default → api-docs.json
+npm run api:download   # 从某个后端服务直连拉文档，如 curl http://localhost:8101/api/v2/api-docs?group=default → api-docs.json（网关暂不聚合文档）
 npm run api:generate    # 生成 src/api 并运行 scripts/postprocess-api.cjs
 ```
 
 **两个关键约定**（后置脚本负责保证）
 
-1. `src/api/core/OpenAPI.ts` 的 `BASE` 读取 `VITE_API_BASE_URL`（值为 `http://localhost:8101`，**不带 `/api`**）——因为生成的接口路径**自带 `/api` 前缀**（与后端各服务的 `context-path` 对应），BASE 若再带 `/api` 会拼出双 `/api`。
-2. `OpenAPI.WITH_CREDENTIALS = true`：前后端跨域（前端 5173 / 后端 8101）时，必须携带 Cookie 才能建立并维持后端基于 Session 的登录态；生成器默认输出 `false`，脚本会强制改回 `true`。
+1. `src/api/core/OpenAPI.ts` 的 `BASE` 读取 `VITE_API_BASE_URL`（值为 `http://localhost:8001`，**不带 `/api`**）——因为生成的接口路径**自带 `/api` 前缀**（与后端各服务的 `context-path` 对应），BASE 若再带 `/api` 会拼出双 `/api`。
+2. `OpenAPI.WITH_CREDENTIALS = true`：前后端跨域（前端 5173 / 后端网关 8001）时，必须携带 Cookie 才能建立并维持后端基于 Session 的登录态；生成器默认输出 `false`，脚本会强制改回 `true`。
 
 **后端端口对应关系**（微服务版）
 
-| 服务 | 端口 | context-path |
-| --- | --- | --- |
-| 用户服务 | 8101 | `/api` |
-| 题目服务 | 8102 | `/api` |
-| 判题服务 | 8103 | `/api` |
-| 网关 | 8080 | —（路由规则待配置） |
+| 服务 | 端口 | context-path | 对外 |
+| --- | --- | --- | --- |
+| **网关** | **8001** | —（已配路由） | ✅ **唯一对外** |
+| 用户服务 | 8101 | `/api` | ❌ 只对内 |
+| 题目服务 | 8102 | `/api` | ❌ 只对内 |
+| 判题服务 | 8103 | `/api` | ❌ 只对内（仅 inner 接口，网关不开路由） |
 
-> ⚠️ 当前 `.env` 只配置了单个 `VITE_API_BASE_URL`（指向 8101）。微服务拆分后，题目相关接口位于 8102 服务；如需直连多个服务，需按服务分别配置基地址，或等网关路由配置完成后统一走网关入口。
+> ✅ 前端只需配**一个** `VITE_API_BASE_URL` 指向网关（8001）。网关按 `Path` 分发：`/api/user/**`、`/api/file/**` → 用户服务；`/api/question/**`、`/api/question_submit/**` → 题目服务。前端**不感知** 8101/8102/8103 —— 那些端口只在内网互调。
+> 注意：网关路由**覆盖不到** `/api/inner/**`（服务间专用接口），因此 inner 接口对前端天然不可达。
 
 ## 8. 部署说明
 
@@ -154,7 +155,7 @@ npm run api:generate    # 生成 src/api 并运行 scripts/postprocess-api.cjs
 
 | 问题 | 原因 | 解决 |
 | --- | --- | --- |
-| 请求路径出现双 `/api` | `VITE_API_BASE_URL` 误带了 `/api` | 保持 BASE 只到域名 + 端口，如 `http://localhost:8101` |
+| 请求路径出现双 `/api` | `VITE_API_BASE_URL` 误带了 `/api` | 保持 BASE 只到域名 + 端口，如 `http://localhost:8001` |
 | 登录成功后仍显示未登录 | 跨域 Cookie 未携带 | 确认 `OpenAPI.WITH_CREDENTIALS = true` 与 axios `withCredentials`，后端需相应放开 CORS |
 | 刷新子页面 404 | 静态服务器未配置 history 回退 | 配置所有路径回退 `index.html` |
 | `api:generate` 后手写文件丢失 | 生成器会重建 `src/api` | 手写代码不要放进 `src/api` |

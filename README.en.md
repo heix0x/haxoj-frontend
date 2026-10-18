@@ -56,7 +56,7 @@ All versions come from `package.json`:
 npm install
 
 # 2. configure the backend URL: edit .env in the project root
-#    VITE_API_BASE_URL=http://localhost:8101
+#    VITE_API_BASE_URL=http://localhost:8001
 
 # 3. start the dev server (Vite default port 5173)
 npm run dev
@@ -85,7 +85,7 @@ npm run preview
 
 ```
 haxoj-frontend/
-├── .env                       # VITE_API_BASE_URL (currently http://localhost:8101)
+├── .env                       # VITE_API_BASE_URL (currently the gateway, http://localhost:8001)
 ├── vite.config.ts             # plugins [vue(), vueDevTools()], alias @ → ./src
 ├── scripts/postprocess-api.cjs# post-process for api:generate (BASE from env, WITH_CREDENTIALS → true)
 ├── src/
@@ -123,25 +123,26 @@ haxoj-frontend/
 **Where the API comes from**: the backend exposes an OpenAPI document via Knife4j; the frontend generates a TypeScript client with `openapi-typescript-codegen`.
 
 ```bash
-npm run api:download   # curl http://localhost:8101/api/v2/api-docs?group=default → api-docs.json
+npm run api:download   # fetch the document straight from one service, e.g. curl http://localhost:8101/api/v2/api-docs?group=default → api-docs.json (the gateway does not aggregate docs yet)
 npm run api:generate    # generate src/api and run scripts/postprocess-api.cjs
 ```
 
 **Two key conventions** (enforced by the post-process script)
 
-1. `BASE` in `src/api/core/OpenAPI.ts` reads `VITE_API_BASE_URL` (`http://localhost:8101`, **without `/api`**) — because the generated request paths **already carry the `/api` prefix** (matching each backend service's `context-path`); adding `/api` to BASE would produce a doubled `/api`.
-2. `OpenAPI.WITH_CREDENTIALS = true`: when frontend (5173) and backend (8101) are cross-origin, cookies must be sent to establish and keep the backend's Session-based login state. The generator defaults to `false`, and the script forces it back to `true`.
+1. `BASE` in `src/api/core/OpenAPI.ts` reads `VITE_API_BASE_URL` (`http://localhost:8001`, **without `/api`**) — because the generated request paths **already carry the `/api` prefix** (matching each backend service's `context-path`); adding `/api` to BASE would produce a doubled `/api`.
+2. `OpenAPI.WITH_CREDENTIALS = true`: when frontend (5173) and backend gateway (8001) are cross-origin, cookies must be sent to establish and keep the backend's Session-based login state. The generator defaults to `false`, and the script forces it back to `true`.
 
 **Backend port mapping** (microservice edition)
 
-| Service | Port | context-path |
-| --- | --- | --- |
-| User service | 8101 | `/api` |
-| Question service | 8102 | `/api` |
-| Judge service | 8103 | `/api` |
-| Gateway | 8080 | — (routes not configured yet) |
+| Service | Port | context-path | Public |
+| --- | --- | --- | --- |
+| **Gateway** | **8001** | — (routes configured) | ✅ **the only public entry** |
+| User service | 8101 | `/api` | ❌ internal only |
+| Question service | 8102 | `/api` | ❌ internal only |
+| Judge service | 8103 | `/api` | ❌ internal only (inner endpoints only; the gateway exposes no route) |
 
-> ⚠️ `.env` currently defines a single `VITE_API_BASE_URL` pointing at 8101. After the microservice split, question-related APIs live on port 8102; to talk to multiple services directly you must configure one base URL per service, or wait until gateway routing is configured and route everything through the gateway.
+> ✅ The frontend needs just **one** `VITE_API_BASE_URL` pointing at the gateway (8001). The gateway dispatches by `Path`: `/api/user/**`, `/api/file/**` → user service; `/api/question/**`, `/api/question_submit/**` → question service. The frontend is **unaware** of 8101/8102/8103 — those ports are used only for internal service-to-service calls.
+> Note: the gateway routes **do not cover** `/api/inner/**` (service-to-service endpoints), so inner endpoints are unreachable from the frontend.
 
 ## 8. Deployment
 
@@ -154,7 +155,7 @@ npm run api:generate    # generate src/api and run scripts/postprocess-api.cjs
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| Request path contains a doubled `/api` | `VITE_API_BASE_URL` mistakenly includes `/api` | keep BASE to host + port only, e.g. `http://localhost:8101` |
+| Request path contains a doubled `/api` | `VITE_API_BASE_URL` mistakenly includes `/api` | keep BASE to host + port only, e.g. `http://localhost:8001` |
 | Login succeeds but the UI still shows logged out | cross-origin cookies not sent | ensure `OpenAPI.WITH_CREDENTIALS = true` and axios `withCredentials`; backend must allow CORS |
 | Refreshing a sub-page returns 404 | static server lacks the history fallback | fall back all paths to `index.html` |
 | Hand-written files vanish after `api:generate` | the generator rebuilds `src/api` | never put hand-written code in `src/api` |
