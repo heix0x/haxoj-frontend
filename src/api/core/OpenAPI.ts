@@ -20,7 +20,7 @@ export type OpenAPIConfig = {
 }
 
 export const OpenAPI: OpenAPIConfig = {
-  BASE: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8101',
+  BASE: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001',
   VERSION: '1.0',
   WITH_CREDENTIALS: true, // 让生成的 service 请求真正携带 Cookie （后端 session 登录态依赖，跨域时必须显式开启）
   CREDENTIALS: 'include',

@@ -18,11 +18,11 @@
  *   1. src/api/core/OpenAPI.ts 的 BASE
  *      生成器会输出硬编码 BASE（形如 BASE: 'http://localhost:8101/api'），
  *      其中 /api 与 service 路径自带的 /api 前缀会拼成 双 /api 请求路径，
- *      需替换为读取 .env 的 VITE_API_BASE_URL（值为 http://localhost:8101，不带 /api）。
+ *      需替换为读取 .env 的 VITE_API_BASE_URL（值为 http://localhost:8001，不带 /api，指向网关）。
  *   2. src/api/core/OpenAPI.ts 的 WITH_CREDENTIALS
  *      生成器默认输出 false，而 request.ts 会以「单请求级」withCredentials 传给 axios，
  *      会覆盖 src/plugins/axios.ts 里设置的全局 true。
- *      前端(5173)与后端(8101)跨域，凭证为 false 时浏览器不会携带/保存 Cookie，
+ *      前端(5173)与后端(网关 8001)跨域，凭证为 false 时浏览器不会携带/保存 Cookie，
  *      后端基于 Session 的登录态将无法建立与维持，故需强制改为 true。
  *
  * 本脚本幂等：已修复则跳过，可反复执行。
@@ -43,7 +43,7 @@ function patchOpenApiBase() {
     console.log('[postprocess] OpenAPI.ts BASE 已使用 env，跳过')
     return
   }
-  const patched = content.replace(/BASE: '[^']*',/, `BASE: ${marker} || 'http://localhost:8101',`)
+  const patched = content.replace(/BASE: '[^']*',/, `BASE: ${marker} || 'http://localhost:8001',`)
   if (patched === content) {
     console.warn('[postprocess] 未匹配到 BASE 行，请手动检查 OpenAPI.ts')
     return
