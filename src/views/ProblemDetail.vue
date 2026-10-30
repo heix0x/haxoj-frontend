@@ -133,6 +133,8 @@ import { QuestionControllerService, QuestionSubmitControllerService } from '@/ap
 import type { QuestionVO } from '@/api'
 import { getAcceptRate, getAcceptRateClass } from '@/utils/question'
 import { clearQuestionListCache } from '@/utils/questionListCache'
+// 内存/栈限制的 KB→MB 展示与提交记录页共用同一份实现（utils/submission）
+import { formatMemoryKb as formatMemory } from '@/utils/submission'
 
 defineOptions({
   name: 'ProblemDetail',
@@ -145,7 +147,10 @@ const router = useRouter()
 const mdPlugins = [gfm(), highlight()]
 
 // ==================== 语言配置 ====================
-// value 必须与后端 QuestionSubmitLanguageEnum 一致（java / c++ / golang）
+// value 必须与后端 QuestionSubmitLanguageEnum 一致。
+// 后端枚举里还有 c++ / golang，但代码沙箱目前只实现了 Java：
+// 这两个选项放出来只会让用户提交后收到「当前仅支持 Java」的错误，所以先不展示。
+// 加回多语言时，这里补选项 + 沙箱补实现，两件事要一起做。
 // monaco 为 Monaco Editor 的语言 id；template 为切换语言时的初始代码骨架
 interface LanguageOption {
   value: string
@@ -163,32 +168,6 @@ const languageOptions: LanguageOption[] = [
     public static void main(String[] args) {
 
     }
-}
-`,
-  },
-  {
-    value: 'c++',
-    label: 'C++',
-    monaco: 'cpp',
-    template: `#include <iostream>
-using namespace std;
-
-int main() {
-
-    return 0;
-}
-`,
-  },
-  {
-    value: 'golang',
-    label: 'Go',
-    monaco: 'go',
-    template: `package main
-
-import "fmt"
-
-func main() {
-
 }
 `,
   },
@@ -266,7 +245,7 @@ const handleSubmit = async () => {
       },
     })
     if (res.code === 0) {
-      Message.success('提交成功，可前往提交记录查看判题结果')
+      Message.success('提交成功，可在顶栏「提交记录」查看判题结果')
       // 提交会改变该题的通过/提交数，作废题库列表缓存，返回列表时看到最新通过率
       clearQuestionListCache()
     } else {
@@ -278,18 +257,6 @@ const handleSubmit = async () => {
   } finally {
     submitting.value = false
   }
-}
-
-// ==================== 工具函数 ====================
-// 后端判题内存/栈单位为 KB，超过 1MB 换算成 MB 展示，更符合阅读习惯
-const formatMemory = (kb?: number) => {
-  const value = Number(kb ?? 0)
-  if (!value) return '-'
-  if (value >= 1024) {
-    const mb = value / 1024
-    return `${Number.isInteger(mb) ? mb : mb.toFixed(1)}MB`
-  }
-  return `${value}KB`
 }
 
 onMounted(loadQuestion)

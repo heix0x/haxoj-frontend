@@ -57,10 +57,13 @@ const props = withDefaults(
     language?: string
     // 编辑器高度，支持任何合法 CSS 高度值（px / % / vh 等），默认 400px
     height?: string
+    // 是否只读（查看历史提交等只读场景）；默认 false，编辑场景不受影响
+    readonly?: boolean
   }>(),
   {
     language: 'javascript',
     height: '400px',
+    readonly: false,
   },
 )
 
@@ -90,7 +93,7 @@ onMounted(() => {
       enabled: true, // 右侧缩略图（文章专门讲过的那个配置）
       renderCharacters: true, // 缩略图渲染真实字符而非色块
     },
-    readOnly: false, // 只读模式
+    readOnly: props.readonly, // 只读模式（查看历史提交等场景传 readonly）
     scrollBeyondLastLine: false, // 禁止滚动超过最后一行
     tabSize: 4,
     // 关键：关闭 Monaco 0.52+ 在 Chrome/Edge 上默认启用的 Native EditContext 输入管线。

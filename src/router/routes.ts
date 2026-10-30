@@ -43,6 +43,14 @@ const routes = [
         meta: { title: '做题', hideInMenu: true, activeMenu: 'problems' },
       },
       {
+        // 提交记录：当前用户本人的提交历史。
+        // 后端 /question_submit/my/list/page 强制按登录人过滤，接口本身不需要传 userId
+        path: 'submissions',
+        name: 'Submissions',
+        component: () => import('@/views/Submissions.vue'),
+        meta: { title: '提交记录', access: ACCESS_ENUM.USER },
+      },
+      {
         path: 'contests',
         name: 'Contests',
         component: () => import('@/views/Contests.vue'),
