@@ -13,7 +13,9 @@ dist
 dist-ssr
 coverage
 *.local
+# API 文档临时产物（api:download 拉取的原始 spec + 中间生成目录）
 api-docs.json
+.api-tmp/
 
 /cypress/videos/
 /cypress/screenshots/
